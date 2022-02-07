@@ -39,5 +39,5 @@ setup(
     ],
 
     packages=find_packages()  # Required
-    # install_requires=['numpy', 'tqdm', 'keras', 'tensorflow', 'tqdm', 'scikit-learn'],
+    # install_requires=['numpy', 'tqdm', 'keras', 'tensorflow', 'tqdm', 'scikit-learn', 'networkx'],
 )

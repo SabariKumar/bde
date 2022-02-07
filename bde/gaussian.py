@@ -71,14 +71,14 @@ class GaussianRunner(object):
         mol = Chem.MolFromSmiles(self.smiles)
         mol = Chem.rdmolops.AddHs(mol)
 
-        # If the molecule is a radical; add a hydrogen so MMFF converges to a
+        # If the molecule is a radical; add hydrogens so MMFF converges to a
         # reasonable structure
         is_radical = False
-        radical_index = None
+        radical_index = []
         for i, atom in enumerate(mol.GetAtoms()):
             if atom.GetNumRadicalElectrons() != 0:
                 is_radical = True
-                radical_index = i
+                radical_index.append(i)
                 
                 atom.SetNumExplicitHs(atom.GetNumExplicitHs() + 1)
                 atom.SetNumRadicalElectrons(0)
@@ -113,9 +113,10 @@ class GaussianRunner(object):
 
         # If hydrogen was added; remove it before returning the final mol
         if is_radical:
-            radical_atom = mol.GetAtomWithIdx(radical_index)
-            radical_atom.SetNumExplicitHs(int(radical_atom.GetNumExplicitHs()) - 1)
-            radical_atom.SetNumRadicalElectrons(1)
+            for ind in radical_index:
+                radical_atom = mol.GetAtomWithIdx(ind)
+                radical_atom.SetNumExplicitHs(int(radical_atom.GetNumExplicitHs()) - 1)
+                radical_atom.SetNumRadicalElectrons(1)
 
         return mol, int(most_stable_conformer)
 
@@ -168,8 +169,19 @@ class GaussianRunner(object):
                     
                     f.write('\n'.join(header2))
 
-            else:
+            elif self.type_ == 'diradical':
 
+                header1 = [
+                    '%chk={0}'.format(checkpoint_file),
+                    '%MEM={}'.format(self.mem),
+                    '%nprocshared={}'.format(self.nprocs),
+                    '# stable=opt UM062X/Def2TZVP scf=(xqc,maxconventionalcycles=400)'
+                    ' nosymm guess=mix']
+                subprocess.run(
+                    ['obabel', sdf_file.name, '-O', self.gjf, '-xk',
+                     '\n'.join(header1)])
+
+            else:
                 header1 = [
                     '%MEM={}'.format(self.mem),
                     '%nprocshared={}'.format(self.nprocs),
